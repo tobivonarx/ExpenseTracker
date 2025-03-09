@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <h2>Your Projects</h2>
+    {% if projects %}
+        <ul>
+        {% for project in projects %}
+            <li><a href="{{ url_for('main.project', project_id=project.id) }}" class="project-link">{{ project.name }}</a> (Created by: {{ project.creator.username }})</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have no projects yet. <a href="{{ url_for('main.create_project') }}">Create one!</a></p>
+    {% endif %}
+{% endblock %}

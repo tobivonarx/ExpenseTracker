@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Expenses for Project: {{ project.name }}</h2>
+
+    <a href="{{ url_for('share_project', project_id=project.id) }}" class="btn btn-primary">Share Project</a>
+
+    <hr>
+
+    <h3>All Expenses</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Paid By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for expense in expenses %}
+            <tr>
+                <td>{{ expense.description }}</td>
+                <td>${{ "%.2f"|format(expense.amount) }}</td>
+                <td>{{ expense.paid_by.username }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No expenses added yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h3>Who Owes Who?</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Spent</th>
+                <th>Should Have Paid</th>
+                <th>Balance</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user_id, spent in user_expenses.items() %}
+            <tr>
+                <td>{{ users[user_id].username }}</td>  <td>${{ "%.2f"|format(spent) }}</td>
+                <td>${{ "%.2f"|format(split_amount) }}</td>
+                    <td>
+                        {% if user_balances[user_id] > 0 %}
+                            <span class="text-success">+${{ "%.2f"|format(user_balances[user_id]) }}</span>
+                        {% elif user_balances[user_id] < 0 %}
+                            <span class="text-danger">-${{ "%.2f"|format(user_balances[user_id] | abs) }}</span>
+                        {% else %}
+                            <span class="text-muted">Settled</span>
+                        {% endif %}
+                    </td>
+                <td>
+                    {% if user_balances[user_id] < 0 %}
+                    <form action="{{ url_for('settle_payment', project_id=project.id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-warning btn-sm">Settle</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}
