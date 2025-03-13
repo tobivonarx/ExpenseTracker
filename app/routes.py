@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from .forms import RegistrationForm, LoginForm, ProjectForm, ExpenseForm, ShareProjectForm, RemoveParticipantForm, SettlePaymentForm
 from .models import db, User, Project, Expense, ProjectParticipant
@@ -61,6 +61,46 @@ def create_project():
         flash('Project created successfully!', 'success')
         return redirect(url_for('main.index'))
     return render_template('create_project.html', form=form)
+
+@main_bp.route('/api/projects')
+def api_projects():
+    """
+    Returns a JSON list of projects the current user has access to.
+    """
+    projects = Project.query.all()
+
+    project_list = []
+    for project in projects:
+        project_data = {
+            'id': project.id,
+            'name': project.name,
+            'creator': project.creator.username,
+            'created_at': project.created_at.isoformat(),
+        }
+        project_list.append(project_data)
+
+    return jsonify(project_list)
+
+@main_bp.route('/api/projects/<int:project_id>/expenses')
+def api_project_expenses(project_id):
+    """
+    Returns a JSON list of expenses for a specific project.
+    Requires authentication and access control.
+    """
+    project = Project.query.get_or_404(project_id)
+
+    expense_list = []
+    for expense in project.expenses:
+        expense_data = {
+            'id': expense.id,
+            'description': expense.description,
+            'amount': expense.amount,
+            'user': expense.user.username,
+            'created_at': expense.created_at.isoformat(),
+        }
+        expense_list.append(expense_data)
+
+    return jsonify(expense_list)
 
 @main_bp.route('/project/<int:project_id>', methods=['GET', 'POST'])
 @login_required

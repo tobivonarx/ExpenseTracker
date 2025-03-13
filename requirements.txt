@@ -1,5 +1,4 @@
 Flask
-flask_app
 Flask-SQLAlchemy
 Flask-Login
 Flask-WTF
