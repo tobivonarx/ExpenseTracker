@@ -5,7 +5,17 @@ body {
     padding: 0;
     background-color: #121212; /* Dark background */
     color: #fff; /* White text */
+    display: flex; /* Use flexbox for the body */
+    flex-direction: column; /* Stack children vertically */
+    min-height: 100vh; /* Ensure body takes at least viewport height */
 }
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
 
 .container {
     width: 80%;
@@ -15,6 +25,7 @@ body {
     background-color: #1e1e1e; /* Slightly lighter dark background for content */
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); /* Shadow for contrast */
+    flex-grow: 1;  /*  Let the container grow to fill available space */
 }
 
 h1, h2, h3 {
@@ -157,6 +168,16 @@ li:last-child {
 }
 .balance-zero{
 	color: white;
+}
+
+/* Footer Styles */
+.footer {
+    background-color: #2c3e50; /* Same as header */
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    width: 100%; /* Ensure footer spans the entire width */
+
 }
 
 /* Responsive adjustments */

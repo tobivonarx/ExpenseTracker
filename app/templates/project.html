@@ -73,23 +73,22 @@
         <p>All debts are settled!</p>
     {% endif %}
 
-    {% if current_user == project.creator %}
-    <div class="project-actions">
-        <h3>Project Actions</h3>
-        <form method="POST" action="" style="display: inline-block; margin-right: 20px;">
-            {{ remove_participant_form.hidden_tag() }}
-            {{ remove_participant_form.user_id.label }}
-            {{ remove_participant_form.user_id }}
-            {{ remove_participant_form.submit() }}
-        </form>
+     {% if current_user == project.creator %}
+        <div class="project-actions">
+            <h3>Project Actions</h3>
+            <form method="POST" action="" style="display: inline-block; margin-right: 20px;">
+                {{ remove_participant_form.hidden_tag() }}
+                {{ remove_participant_form.user_id.label }}
+                {{ remove_participant_form.user_id }}
+                {{ remove_participant_form.submit() }}
+            </form>
+            <form method="POST" action="{{ url_for('main.settle_project', project_id=project.id) }}" style="display: inline-block;">
+                {{ settle_all_form.hidden_tag() }}
+                {{ settle_all_form.submit() }}
+            </form>
+        </div>
 
-        <form method="POST" action="" style="display: inline-block;">
-            {{ settle_payment_form.hidden_tag() }}
-            {{ settle_payment_form.user_id.label }}
-            {{ settle_payment_form.user_id }}
-            {{ settle_payment_form.submit() }}
-        </form>
-     </div>
+
     {% endif %}
 
     <p>Split Amount (per person): ${{ "%.2f"|format(split_amount) }}</p>

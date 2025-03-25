@@ -2,14 +2,29 @@
 
 {% block title %}Dashboard{% endblock %}
 
+{% block head %}
+    {{ super() }}  {# Important: Keep this to inherit styles from base.html #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
     <h2>Your Projects</h2>
+
     {% if projects %}
-        <ul>
-        {% for project in projects %}
-            <li><a href="{{ url_for('main.project', project_id=project.id) }}" class="project-link">{{ project.name }}</a> (Created by: {{ project.creator.username }})</li>
-        {% endfor %}
-        </ul>
+        <nav>
+            <ul class="project-list">
+                {% for project in projects|sort(attribute='name') %}
+                    <li>
+                        <div class="project-item">
+                            <a href="{{ url_for('main.project', project_id=project.id) }}" class="project-link">
+                                <span class="project-name">{{ project.name }}</span>
+                            </a>
+                            <span class="project-creator">(Created by: {{ project.creator.username }})</span>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </nav>
     {% else %}
         <p>You have no projects yet. <a href="{{ url_for('main.create_project') }}">Create one!</a></p>
     {% endif %}

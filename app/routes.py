@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from .forms import RegistrationForm, LoginForm, ProjectForm, ExpenseForm, ShareProjectForm, RemoveParticipantForm, SettlePaymentForm
+from .forms import RegistrationForm, LoginForm, ProjectForm, ExpenseForm, ShareProjectForm, RemoveParticipantForm, SettleAllForm
 from .models import db, User, Project, Expense, ProjectParticipant
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func
@@ -102,6 +102,26 @@ def api_project_expenses(project_id):
 
     return jsonify(expense_list)
 
+@main_bp.route('/project/<int:project_id>/settle', methods=['POST'])
+@login_required
+def settle_project(project_id):
+    project = Project.query.get_or_404(project_id)
+
+    # Only the project creator can settle
+    if current_user != project.creator:
+        flash('You do not have permission to settle this project.', 'danger')
+        return redirect(url_for('main.project', project_id=project_id))
+
+    # Delete all expenses associated with the project
+    expenses_to_settle = Expense.query.filter_by(project_id=project_id).all()
+    for expense in expenses_to_settle:
+        db.session.delete(expense)
+    db.session.commit()
+
+    flash('All expenses for this project have been settled!', 'success')
+    return redirect(url_for('main.project', project_id=project_id))
+
+
 @main_bp.route('/project/<int:project_id>', methods=['GET', 'POST'])
 @login_required
 def project(project_id):
@@ -112,19 +132,18 @@ def project(project_id):
         flash('You do not have access to this project.', 'danger')
         return redirect(url_for('main.index'))
 
-    # Use prefixes for the forms!
+    # Use prefixes for the forms!  This is essential for multiple forms.
     expense_form = ExpenseForm(prefix='expense')
     share_form = ShareProjectForm(prefix='share')
     remove_participant_form = RemoveParticipantForm(prefix='remove')
-    settle_payment_form = SettlePaymentForm(prefix='settle')
+    settle_all_form = SettleAllForm(prefix='settle') # Create and instance of form
 
-    # Populate choices for the dropdowns
+
+    # --- Populate choices for the dropdowns ---
     participants = [project.creator] + [p.user for p in project.participants]
-    participant_choices = [(user.id, user.username) for user in participants if user.id != project.creator.id]
+    participant_choices = [(user.id, user.username) for user in participants if user.id != project.creator.id] # Exclude creator
 
     remove_participant_form.user_id.choices = participant_choices
-    settle_payment_form.user_id.choices = [(user.id, user.username) for user in participants]
-
 
     if expense_form.is_submitted() and expense_form.validate():
         new_expense = Expense(description=expense_form.description.data,
@@ -150,33 +169,26 @@ def project(project_id):
                 flash('Project shared successfully!', 'success')
         else:
             flash('User with this email does not exist.', 'danger')
-        return redirect(url_for('main.project', project_id=project_id))
+        return redirect(url_for('main.project', project_id=project_id))  # IMPORTANT: Redirect after processing!
 
     if remove_participant_form.is_submitted() and remove_participant_form.validate():
         user_id_to_remove = int(remove_participant_form.user_id.data)
         if user_id_to_remove == project.creator_id:
             flash("You cannot remove the project creator.", "danger")
-            return redirect(url_for('main.project', project_id=project_id))
+            return redirect(url_for('main.project', project_id=project_id))  # Redirect if trying to remove creator
         participant_to_remove = ProjectParticipant.query.filter_by(project_id=project_id, user_id=user_id_to_remove).first()
         if participant_to_remove:
             db.session.delete(participant_to_remove)
             db.session.commit()
             flash('Participant removed successfully!', 'success')
         else:
-            flash('Participant not found.', 'danger')
-        return redirect(url_for('main.project', project_id=project_id))
+            flash('Participant not found.', 'danger')  # Should not happen, but good to check
+        return redirect(url_for('main.project', project_id=project_id))  # IMPORTANT: Redirect after processing!
 
-    if settle_payment_form.is_submitted() and settle_payment_form.validate():
-        user_id_to_settle = int(settle_payment_form.user_id.data)
-        expenses_to_settle = Expense.query.filter_by(project_id=project_id).all()
-        for expense in expenses_to_settle:
-            db.session.delete(expense)
-        db.session.commit()
-        flash('Expenses settled successfully!', 'success')
-        return redirect(url_for('main.project', project_id=project_id))
 
     # --- Debt Calculation Logic ---
     total_spent = db.session.query(func.sum(Expense.amount)).filter(Expense.project_id == project_id).scalar() or 0
+    total_spent = round(total_spent, 2)
     expenses = Expense.query.filter_by(project_id=project_id).order_by(Expense.created_at.desc()).all()
     all_participants = [project.creator] + [p.user for p in project.participants]
     num_participants = len(all_participants)
@@ -208,4 +220,4 @@ def project(project_id):
                            total_spent=total_spent, split_amount=split_amount,
                            debts=debts, # Pass debts to the template
                            remove_participant_form=remove_participant_form,
-                           settle_payment_form=settle_payment_form)
+                           settle_all_form = settle_all_form) # Pass the form

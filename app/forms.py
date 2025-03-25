@@ -43,6 +43,5 @@ class RemoveParticipantForm(FlaskForm):
     user_id = SelectField('Select User to Remove', coerce=int, validators=[DataRequired()])  # Use SelectField
     submit = SubmitField('Remove Participant')
 
-class SettlePaymentForm(FlaskForm):
-    user_id = SelectField('Select User to Settle', coerce=int, validators=[DataRequired()])  # Use SelectField
-    submit = SubmitField('Settle Payment')
+class SettleAllForm(FlaskForm):
+    submit = SubmitField('Settle All Payments')
