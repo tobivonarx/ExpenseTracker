@@ -4,12 +4,22 @@ from flask_login import LoginManager
 from dotenv import load_dotenv
 import os
 
-load_dotenv()  # Load environment variables from .env file
+# Load environment variables from .env file
+load_dotenv()
 
+# Initialize the SQLAlchemy database object
 db = SQLAlchemy()
+# Initialize the Flask-Login LoginManager
 login_manager = LoginManager()
 
 def create_app():
+    """
+    Create and configure the Flask application.
+
+    This function initializes the Flask app, sets up the database connection,
+    configures the login manager, registers blueprints, and creates the database
+    tables (if they don't exist).
+    """
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     password = os.getenv('MYSQL_PASSWORD')

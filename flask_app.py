@@ -1,6 +1,7 @@
 from app import create_app
 
-app = create_app()  # Keep it as 'app'
+# Create the Flask application instance using the create_app function from the app module.
+app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True)  # Keep this as 'app' too (for local development)
+    app.run(debug=True)

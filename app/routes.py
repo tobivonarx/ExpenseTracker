@@ -5,11 +5,17 @@ from .models import db, User, Project, Expense, ProjectParticipant
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func
 
+# Create a blueprint for the main application routes
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 @login_required
 def index():
+    """
+    Display the user's dashboard, showing all projects they are involved in.
+
+    This includes projects created by the user and projects shared with them.
+    """
     projects_created = current_user.projects_created
     projects_participating = [pp.project for pp in current_user.projects_shared]
     projects = projects_created + projects_participating
@@ -17,6 +23,13 @@ def index():
 
 @main_bp.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    Handle user registration.
+
+    If the user is already authenticated, redirect them to the index page.
+    On POST, validate the registration form, hash the password,
+    create a new user, and redirect to the login page.
+    """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = RegistrationForm()
@@ -31,6 +44,13 @@ def register():
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Handle user login.
+
+    If the user is already authenticated, redirect them to the index page.
+    On POST, validate the login form, check the user's credentials,
+    log the user in, and redirect them to the next page or the index.
+    """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = LoginForm()
@@ -47,12 +67,23 @@ def login():
 @main_bp.route('/logout')
 @login_required
 def logout():
+    """
+    Handle user logout.
+
+    Log the user out and redirect them to the index page.
+    """
     logout_user()
     return redirect(url_for('main.index'))
 
 @main_bp.route('/create_project', methods=['GET', 'POST'])
 @login_required
 def create_project():
+    """
+    Handle project creation.
+
+    On POST, validate the project form, create a new project,
+    and redirect to the index page.
+    """
     form = ProjectForm()
     if form.validate_on_submit():
         new_project = Project(name=form.name.data, creator=current_user)
@@ -85,7 +116,6 @@ def api_projects():
 def api_project_expenses(project_id):
     """
     Returns a JSON list of expenses for a specific project.
-    Requires authentication and access control.
     """
     project = Project.query.get_or_404(project_id)
 
@@ -105,6 +135,12 @@ def api_project_expenses(project_id):
 @main_bp.route('/project/<int:project_id>/settle', methods=['POST'])
 @login_required
 def settle_project(project_id):
+    """
+    Handle settling all expenses for a project.
+
+    Only the project creator can perform this action.
+    This deletes all expenses associated with the project.
+    """
     project = Project.query.get_or_404(project_id)
 
     # Only the project creator can settle
@@ -125,6 +161,13 @@ def settle_project(project_id):
 @main_bp.route('/project/<int:project_id>', methods=['GET', 'POST'])
 @login_required
 def project(project_id):
+    """
+    Display and handle project details, including expenses, sharing,
+    and participant removal.
+
+    Access control is enforced to ensure only authorized users can view
+    and modify project details.
+    """
     project = Project.query.get_or_404(project_id)
 
     # Check if the user has access to the project
@@ -139,7 +182,7 @@ def project(project_id):
     settle_all_form = SettleAllForm(prefix='settle') # Create and instance of form
 
 
-    # --- Populate choices for the dropdowns ---
+    # --- Populate choices for the dropdown ---
     participants = [project.creator] + [p.user for p in project.participants]
     participant_choices = [(user.id, user.username) for user in participants if user.id != project.creator.id] # Exclude creator
 
