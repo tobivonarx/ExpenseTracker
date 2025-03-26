@@ -26,6 +26,8 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://tobiasvonarx:{password}@tobiasvonarx.mysql.pythonanywhere-services.com/tobiasvonarx$expenses'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_POOL_RECYCLE'] = 280
+    app.config['SQLALCHEMY_POOL_TIMEOUT'] = 10
+    app.config['SQLALCHEMY_POOL_PRE_PING'] = True
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'main.login'  # Redirect to login page if not authenticated
